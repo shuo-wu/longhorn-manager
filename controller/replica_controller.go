@@ -58,6 +58,7 @@ type ReplicaController struct {
 	ds *datastore.DataStore
 
 	nStoreSynced  cache.InformerSynced
+	dStoreSynced  cache.InformerSynced
 	rStoreSynced  cache.InformerSynced
 	imStoreSynced cache.InformerSynced
 
@@ -69,6 +70,7 @@ func NewReplicaController(
 	ds *datastore.DataStore,
 	scheme *runtime.Scheme,
 	nodeInformer lhinformers.NodeInformer,
+	diskInformer lhinformers.DiskInformer,
 	replicaInformer lhinformers.ReplicaInformer,
 	instanceManagerInformer lhinformers.InstanceManagerInformer,
 	kubeClient clientset.Interface,
@@ -91,6 +93,7 @@ func NewReplicaController(
 		ds: ds,
 
 		nStoreSynced:  nodeInformer.Informer().HasSynced,
+		dStoreSynced:  diskInformer.Informer().HasSynced,
 		rStoreSynced:  replicaInformer.Informer().HasSynced,
 		imStoreSynced: instanceManagerInformer.Informer().HasSynced,
 	}
@@ -141,6 +144,21 @@ func NewReplicaController(
 		},
 	})
 
+	diskInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
+		AddFunc: func(obj interface{}) {
+			d := obj.(*longhorn.Disk)
+			rc.enqueueDiskChange(d)
+		},
+		UpdateFunc: func(oldObj, newObj interface{}) {
+			cur := newObj.(*longhorn.Disk)
+			rc.enqueueDiskChange(cur)
+		},
+		DeleteFunc: func(obj interface{}) {
+			d := obj.(*longhorn.Disk)
+			rc.enqueueDiskChange(d)
+		},
+	})
+
 	return rc
 }
 
@@ -151,7 +169,7 @@ func (rc *ReplicaController) Run(workers int, stopCh <-chan struct{}) {
 	logrus.Infof("Start Longhorn replica controller")
 	defer logrus.Infof("Shutting down Longhorn replica controller")
 
-	if !controller.WaitForCacheSync("longhorn replicas", stopCh, rc.nStoreSynced, rc.rStoreSynced, rc.imStoreSynced) {
+	if !controller.WaitForCacheSync("longhorn replicas", stopCh, rc.nStoreSynced, rc.dStoreSynced, rc.rStoreSynced, rc.imStoreSynced) {
 		return
 	}
 
@@ -214,7 +232,7 @@ func (rc *ReplicaController) isEvictionRequested(replica *longhorn.Replica) bool
 
 	node, err := rc.ds.GetNode(replica.Spec.NodeID)
 	if err != nil {
-		logrus.Warnf("Failed to get node %v information err %v", replica.Spec.NodeID, err)
+		logrus.Warnf("Failed to get node %v information, err: %v", replica.Spec.NodeID, err)
 		return false
 	}
 
@@ -224,7 +242,12 @@ func (rc *ReplicaController) isEvictionRequested(replica *longhorn.Replica) bool
 	}
 
 	// Check if disk has been request eviction.
-	if node.Spec.Disks[replica.Spec.DiskID].EvictionRequested == true {
+	disk, err := rc.ds.GetDisk(replica.Spec.DiskID)
+	if err != nil {
+		logrus.Warnf("Failed to get disk %v information, err: %v", replica.Spec.DiskID, err)
+		return false
+	}
+	if disk.Spec.EvictionRequested {
 		return true
 	}
 
@@ -334,16 +357,6 @@ func (rc *ReplicaController) syncReplica(key string) (err error) {
 	rc.UpdateReplicaEvictionStatus(replica)
 
 	return rc.instanceHandler.ReconcileInstanceState(replica, &replica.Spec.InstanceSpec, &replica.Status.InstanceStatus)
-}
-
-func (rc *ReplicaController) enqueueReplica(replica *longhorn.Replica) {
-	key, err := controller.KeyFunc(replica)
-	if err != nil {
-		utilruntime.HandleError(fmt.Errorf("Couldn't get key for object %#v: %v", replica, err))
-		return
-	}
-
-	rc.queue.AddRateLimited(key)
 }
 
 func (rc *ReplicaController) getProcessManagerClient(instanceManagerName string) (*imclient.ProcessManagerClient, error) {
@@ -539,56 +552,50 @@ func (rc *ReplicaController) LogInstance(obj interface{}) (*imapi.LogStream, err
 	return c.ProcessLog(r.Name)
 }
 
+func (rc *ReplicaController) enqueueReplica(replica *longhorn.Replica) {
+	key, err := controller.KeyFunc(replica)
+	if err != nil {
+		utilruntime.HandleError(fmt.Errorf("Couldn't get key for object %#v: %v", replica, err))
+		return
+	}
+
+	rc.queue.AddRateLimited(key)
+}
+
 func (rc *ReplicaController) enqueueInstanceManagerChange(im *longhorn.InstanceManager) {
 	imType, err := datastore.CheckInstanceManagerType(im)
 	if err != nil || imType != types.InstanceManagerTypeReplica {
 		return
 	}
 
-	// replica's NodeID won't change, don't need to check instance manager
-	rs, err := rc.ds.ListReplicasByNode(im.Spec.NodeID)
+	node, err := rc.ds.GetNode(im.Spec.NodeID)
 	if err != nil {
-		logrus.Warnf("Failed to list replicas on node %v", im.Spec.NodeID)
+		logrus.Warnf("Failed to get node %v", im.Spec.NodeID)
+		return
 	}
-	for _, rList := range rs {
-		for _, r := range rList {
-			if r.Status.OwnerID == rc.controllerID {
-				rc.enqueueReplica(r)
-			}
-		}
-	}
-	return
+	rc.enqueueNodeChange(node)
 }
 
 func (rc *ReplicaController) enqueueNodeChange(node *longhorn.Node) {
-
-	var evictionDisks []string
-	// If Node evition, add all the disks to evictionDisks.
-	// Otherwise add request eviction disk separately.
-	if node.Spec.EvictionRequested == true {
-		for diskName := range node.Spec.Disks {
-			evictionDisks = append(evictionDisks, diskName)
-		}
-	} else {
-		for diskName, diskSpec := range node.Spec.Disks {
-			if diskSpec.EvictionRequested == true {
-				evictionDisks = append(evictionDisks, diskName)
-			}
-		}
+	diskList, err := rc.ds.ListDisksByNode(node.Name)
+	if err != nil {
+		logrus.Warnf("Failed to list disks on node %v", node.Name)
+		return
 	}
-
-	// Add eviction requested replicas to the workqueue
-	for _, diskName := range evictionDisks {
-		for replicaName := range node.Status.DiskStatus[diskName].ScheduledReplica {
-			replica, err := rc.ds.GetReplica(replicaName)
-			if err != nil {
-				return
-			}
-			rc.enqueueReplica(replica)
-		}
+	for _, d := range diskList {
+		rc.enqueueDiskChange(d)
 	}
+}
 
-	return
+func (rc *ReplicaController) enqueueDiskChange(disk *longhorn.Disk) {
+	replicaList, err := rc.ds.ListReplicasByDisk(disk.Name)
+	if err != nil {
+		logrus.Warnf("Failed to list replicas using disk %v", disk.Name)
+		return
+	}
+	for _, r := range replicaList {
+		rc.enqueueReplica(r)
+	}
 }
 
 func (rc *ReplicaController) isResponsibleFor(r *longhorn.Replica) bool {

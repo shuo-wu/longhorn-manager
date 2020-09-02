@@ -295,7 +295,7 @@ func (rcs *ReplicaScheduler) IsSchedulableToDisk(size int64, requiredStorage int
 		(size+info.StorageScheduled) <= (info.StorageMaximum-info.StorageReserved)*(info.OverProvisioningPercentage/100)
 }
 
-func (rcs *ReplicaScheduler) GetDiskSchedulingInfo(disk types.DiskSpec, diskStatus *types.DiskStatus) (*DiskSchedulingInfo, error) {
+func (rcs *ReplicaScheduler) GetDiskSchedulingInfo(disk *longhorn.Disk) (*DiskSchedulingInfo, error) {
 	// get StorageOverProvisioningPercentage and StorageMinimalAvailablePercentage settings
 	overProvisioningPercentage, err := rcs.ds.GetSettingAsInt(types.SettingNameStorageOverProvisioningPercentage)
 	if err != nil {
@@ -306,10 +306,10 @@ func (rcs *ReplicaScheduler) GetDiskSchedulingInfo(disk types.DiskSpec, diskStat
 		return nil, err
 	}
 	info := &DiskSchedulingInfo{
-		StorageAvailable:           diskStatus.StorageAvailable,
-		StorageScheduled:           diskStatus.StorageScheduled,
-		StorageReserved:            disk.StorageReserved,
-		StorageMaximum:             diskStatus.StorageMaximum,
+		StorageAvailable:           disk.Status.StorageAvailable,
+		StorageScheduled:           disk.Status.StorageScheduled,
+		StorageReserved:            disk.Spec.StorageReserved,
+		StorageMaximum:             disk.Status.StorageMaximum,
 		OverProvisioningPercentage: overProvisioningPercentage,
 		MinimalAvailablePercentage: minimalAvailablePercentage,
 	}
