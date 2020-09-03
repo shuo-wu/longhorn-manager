@@ -21,8 +21,6 @@ type RancherClient struct {
 	EngineUpgradeInput        EngineUpgradeInputOperations
 	Replica                   ReplicaOperations
 	Controller                ControllerOperations
-	DiskUpdate                DiskUpdateOperations
-	NodeInput                 NodeInputOperations
 	UpdateReplicaCountInput   UpdateReplicaCountInputOperations
 	UpdateDataLocalityInput   UpdateDataLocalityInputOperations
 	WorkloadStatus            WorkloadStatusOperations
@@ -43,8 +41,7 @@ type RancherClient struct {
 	RecurringInput            RecurringInputOperations
 	EngineImage               EngineImageOperations
 	Node                      NodeOperations
-	DiskUpdateInput           DiskUpdateInputOperations
-	DiskInfo                  DiskInfoOperations
+	Disk                      DiskOperations
 	KubernetesStatus          KubernetesStatusOperations
 	BackupListOutput          BackupListOutputOperations
 	SnapshotListOutput        SnapshotListOutputOperations
@@ -73,8 +70,6 @@ func constructClient(rancherBaseClient *RancherBaseClientImpl) *RancherClient {
 	client.EngineUpgradeInput = newEngineUpgradeInputClient(client)
 	client.Replica = newReplicaClient(client)
 	client.Controller = newControllerClient(client)
-	client.DiskUpdate = newDiskUpdateClient(client)
-	client.NodeInput = newNodeInputClient(client)
 	client.UpdateReplicaCountInput = newUpdateReplicaCountInputClient(client)
 	client.UpdateDataLocalityInput = newUpdateDataLocalityInputClient(client)
 	client.WorkloadStatus = newWorkloadStatusClient(client)
@@ -95,8 +90,7 @@ func constructClient(rancherBaseClient *RancherBaseClientImpl) *RancherClient {
 	client.RecurringInput = newRecurringInputClient(client)
 	client.EngineImage = newEngineImageClient(client)
 	client.Node = newNodeClient(client)
-	client.DiskUpdateInput = newDiskUpdateInputClient(client)
-	client.DiskInfo = newDiskInfoClient(client)
+	client.Disk = newDiskClient(client)
 	client.KubernetesStatus = newKubernetesStatusClient(client)
 	client.BackupListOutput = newBackupListOutputClient(client)
 	client.SnapshotListOutput = newSnapshotListOutputClient(client)

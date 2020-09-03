@@ -13,7 +13,7 @@ type Node struct {
 
 	Conditions map[string]interface{} `json:"conditions,omitempty" yaml:"conditions,omitempty"`
 
-	Disks map[string]interface{} `json:"disks,omitempty" yaml:"disks,omitempty"`
+	EvictionRequested bool `json:"evictionRequested,omitempty" yaml:"eviction_requested,omitempty"`
 
 	EvictionRequested bool `json:"evictionRequested,omitempty" yaml:"eviction_requested,omitempty"`
 
@@ -44,8 +44,6 @@ type NodeOperations interface {
 	Update(existing *Node, updates interface{}) (*Node, error)
 	ById(id string) (*Node, error)
 	Delete(container *Node) error
-
-	ActionDiskUpdate(*Node, *DiskUpdateInput) (*Node, error)
 }
 
 func newNodeClient(rancherClient *RancherClient) *NodeClient {
@@ -96,13 +94,4 @@ func (c *NodeClient) ById(id string) (*Node, error) {
 
 func (c *NodeClient) Delete(container *Node) error {
 	return c.rancherClient.doResourceDelete(NODE_TYPE, &container.Resource)
-}
-
-func (c *NodeClient) ActionDiskUpdate(resource *Node, input *DiskUpdateInput) (*Node, error) {
-
-	resp := &Node{}
-
-	err := c.rancherClient.doAction(NODE_TYPE, "diskUpdate", &resource.Resource, input, resp)
-
-	return resp, err
 }
