@@ -67,6 +67,7 @@ const (
 	SettingNamePriorityClass                        = SettingName("priority-class")
 	SettingNameDisableRevisionCounter               = SettingName("disable-revision-counter")
 	SettingNameDisableReplicaRebuild                = SettingName("disable-replica-rebuild")
+	SettingNameRetainDisksDuringNodeDeletion        = SettingName("retain-disks-during-node-deletion")
 )
 
 var (
@@ -101,6 +102,7 @@ var (
 		SettingNamePriorityClass,
 		SettingNameDisableRevisionCounter,
 		SettingNameDisableReplicaRebuild,
+		SettingNameRetainDisksDuringNodeDeletion,
 	}
 )
 
@@ -156,6 +158,7 @@ var (
 		SettingNamePriorityClass:                        SettingDefinitionPriorityClass,
 		SettingNameDisableRevisionCounter:               SettingDefinitionDisableRevisionCounter,
 		SettingNameDisableReplicaRebuild:                SettingDefinitionDisableReplicaRebuild,
+		SettingNameRetainDisksDuringNodeDeletion:        SettingDefinitionRetainDisksDuringNodeDeletion,
 	}
 
 	SettingDefinitionBackupTarget = SettingDefinition{
@@ -470,6 +473,15 @@ var (
 		Required:    true,
 		ReadOnly:    false,
 		Default:     "false",
+	}
+	SettingDefinitionRetainDisksDuringNodeDeletion = SettingDefinition{
+		DisplayName: "Retain disks during node deletion",
+		Description: `Determine if both connected and disconnected disks will be cleaned up before node removal`,
+		Category:    SettingCategoryGeneral,
+		Type:        SettingTypeBool,
+		Required:    true,
+		ReadOnly:    false,
+		Default:     "true",
 	}
 )
 
