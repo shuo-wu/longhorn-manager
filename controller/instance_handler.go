@@ -43,7 +43,7 @@ func NewInstanceHandler(ds *datastore.DataStore, instanceManagerHandler Instance
 	}
 }
 
-func (h *InstanceHandler) syncStatusWithInstanceManager(im *longhorn.InstanceManager, instanceName string, spec *types.InstanceSpec, status *types.InstanceStatus) {
+func (h *InstanceHandler) syncStatusWithInstanceManager(im *longhorn.InstanceManager, instanceName string, isNodeDownOrDeleted bool, spec *types.InstanceSpec, status *types.InstanceStatus) {
 	defer func() {
 		if status.CurrentState == types.InstanceStateStopped {
 			status.InstanceManagerName = ""
@@ -52,8 +52,17 @@ func (h *InstanceHandler) syncStatusWithInstanceManager(im *longhorn.InstanceMan
 
 	if im == nil || im.Status.CurrentState == types.InstanceManagerStateUnknown {
 		if status.Started {
-			logrus.Warnf("The related node %v of instance %v is down or deleted, will mark the instance as state UNKNOWN", spec.NodeID, instanceName)
-			status.CurrentState = types.InstanceStateUnknown
+			if spec.NodeID != "" && !isNodeDownOrDeleted {
+				if status.CurrentState != types.InstanceStateError {
+					logrus.Warnf("The related instance manager of instance %v is not found, will mark the started instance as state ERROR", instanceName)
+					status.CurrentState = types.InstanceStateError
+				}
+			} else {
+				if status.CurrentState != types.InstanceStateUnknown {
+					logrus.Warnf("The related node %v of instance %v is down or deleted, will mark the instance as state UNKNOWN", spec.NodeID, instanceName)
+					status.CurrentState = types.InstanceStateUnknown
+				}
+			}
 		} else {
 			status.CurrentState = types.InstanceStateStopped
 			status.CurrentImage = ""
@@ -190,6 +199,14 @@ func (h *InstanceHandler) ReconcileInstanceState(obj interface{}, spec *types.In
 		}
 	}
 
+	var isNodeDownOrDeleted bool
+	if spec.NodeID != "" {
+		// The related node maybe cleaned up then there is no available instance manager for this instance (typically it's replica).
+		if isNodeDownOrDeleted, err = h.ds.IsNodeDownOrDeleted(spec.NodeID); err != nil {
+			return err
+		}
+	}
+
 	var im *longhorn.InstanceManager
 	if !isCLIAPIVersionOne {
 		if status.InstanceManagerName != "" {
@@ -205,15 +222,14 @@ func (h *InstanceHandler) ReconcileInstanceState(obj interface{}, spec *types.In
 		// There should be an available instance manager for a scheduled instance when its related engine image is compatible
 		if im == nil && spec.EngineImage != "" && spec.NodeID != "" {
 			// The related node maybe cleaned up then there is no available instance manager for this instance (typically it's replica).
-			isNodeDownOrDeleted, err := h.ds.IsNodeDownOrDeleted(spec.NodeID)
-			if err != nil {
-				return err
-			}
 			if !isNodeDownOrDeleted {
 				im, err = h.ds.GetInstanceManagerByInstance(obj)
 				if err != nil {
-					return errors.Wrapf(err, "failed to get instance manager for instance %v", instanceName)
+					if !types.ErrorIsNotFound(err) {
+						return errors.Wrapf(err, "failed to get instance manager for instance %v", instanceName)
+					}
 				}
+				logrus.Debugf("cannot find an available instance manager for instance %v", status.InstanceManagerName)
 			}
 		}
 	}
@@ -300,7 +316,7 @@ func (h *InstanceHandler) ReconcileInstanceState(obj interface{}, spec *types.In
 
 	oldState := status.CurrentState
 
-	h.syncStatusWithInstanceManager(im, instanceName, spec, status)
+	h.syncStatusWithInstanceManager(im, instanceName, isNodeDownOrDeleted, spec, status)
 
 	if oldState != status.CurrentState {
 		logrus.Debugf("Instance handler updated instance %v state, old state %v, new state %v", instanceName, oldState, status.CurrentState)
