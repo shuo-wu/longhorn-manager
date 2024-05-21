@@ -79,7 +79,7 @@ type SPDKServiceClient interface {
 	ReplicaSnapshotRevert(ctx context.Context, in *SnapshotRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	ReplicaList(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*ReplicaListResponse, error)
 	ReplicaWatch(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (SPDKService_ReplicaWatchClient, error)
-	ReplicaRebuildingSrcStart(ctx context.Context, in *ReplicaRebuildingSrcStartRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	ReplicaRebuildingSrcStart(ctx context.Context, in *ReplicaRebuildingSrcStartRequest, opts ...grpc.CallOption) (*ReplicaRebuildingSrcStartResponse, error)
 	ReplicaRebuildingSrcFinish(ctx context.Context, in *ReplicaRebuildingSrcFinishRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	ReplicaRebuildingSrcAttach(ctx context.Context, in *ReplicaRebuildingSrcAttachRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	ReplicaRebuildingSrcDetach(ctx context.Context, in *ReplicaRebuildingSrcDetachRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
@@ -87,7 +87,7 @@ type SPDKServiceClient interface {
 	ReplicaRebuildingDstStart(ctx context.Context, in *ReplicaRebuildingDstStartRequest, opts ...grpc.CallOption) (*ReplicaRebuildingDstStartResponse, error)
 	ReplicaRebuildingDstFinish(ctx context.Context, in *ReplicaRebuildingDstFinishRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	ReplicaRebuildingDstSnapshotCreate(ctx context.Context, in *SnapshotRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
-	ReplicaRebuildingDstSnapshotRevert(ctx context.Context, in *SnapshotRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	ReplicaRebuildingDstSnapshotRevert(ctx context.Context, in *SnapshotRequest, opts ...grpc.CallOption) (*ReplicaRebuildingDstSnapshotRevertResponse, error)
 	ReplicaBackupCreate(ctx context.Context, in *BackupCreateRequest, opts ...grpc.CallOption) (*BackupCreateResponse, error)
 	ReplicaBackupStatus(ctx context.Context, in *BackupStatusRequest, opts ...grpc.CallOption) (*BackupStatusResponse, error)
 	ReplicaBackupRestore(ctx context.Context, in *ReplicaBackupRestoreRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
@@ -221,8 +221,8 @@ func (x *sPDKServiceReplicaWatchClient) Recv() (*emptypb.Empty, error) {
 	return m, nil
 }
 
-func (c *sPDKServiceClient) ReplicaRebuildingSrcStart(ctx context.Context, in *ReplicaRebuildingSrcStartRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
-	out := new(emptypb.Empty)
+func (c *sPDKServiceClient) ReplicaRebuildingSrcStart(ctx context.Context, in *ReplicaRebuildingSrcStartRequest, opts ...grpc.CallOption) (*ReplicaRebuildingSrcStartResponse, error) {
+	out := new(ReplicaRebuildingSrcStartResponse)
 	err := c.cc.Invoke(ctx, SPDKService_ReplicaRebuildingSrcStart_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -293,8 +293,8 @@ func (c *sPDKServiceClient) ReplicaRebuildingDstSnapshotCreate(ctx context.Conte
 	return out, nil
 }
 
-func (c *sPDKServiceClient) ReplicaRebuildingDstSnapshotRevert(ctx context.Context, in *SnapshotRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
-	out := new(emptypb.Empty)
+func (c *sPDKServiceClient) ReplicaRebuildingDstSnapshotRevert(ctx context.Context, in *SnapshotRequest, opts ...grpc.CallOption) (*ReplicaRebuildingDstSnapshotRevertResponse, error) {
+	out := new(ReplicaRebuildingDstSnapshotRevertResponse)
 	err := c.cc.Invoke(ctx, SPDKService_ReplicaRebuildingDstSnapshotRevert_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -589,7 +589,7 @@ type SPDKServiceServer interface {
 	ReplicaSnapshotRevert(context.Context, *SnapshotRequest) (*emptypb.Empty, error)
 	ReplicaList(context.Context, *emptypb.Empty) (*ReplicaListResponse, error)
 	ReplicaWatch(*emptypb.Empty, SPDKService_ReplicaWatchServer) error
-	ReplicaRebuildingSrcStart(context.Context, *ReplicaRebuildingSrcStartRequest) (*emptypb.Empty, error)
+	ReplicaRebuildingSrcStart(context.Context, *ReplicaRebuildingSrcStartRequest) (*ReplicaRebuildingSrcStartResponse, error)
 	ReplicaRebuildingSrcFinish(context.Context, *ReplicaRebuildingSrcFinishRequest) (*emptypb.Empty, error)
 	ReplicaRebuildingSrcAttach(context.Context, *ReplicaRebuildingSrcAttachRequest) (*emptypb.Empty, error)
 	ReplicaRebuildingSrcDetach(context.Context, *ReplicaRebuildingSrcDetachRequest) (*emptypb.Empty, error)
@@ -597,7 +597,7 @@ type SPDKServiceServer interface {
 	ReplicaRebuildingDstStart(context.Context, *ReplicaRebuildingDstStartRequest) (*ReplicaRebuildingDstStartResponse, error)
 	ReplicaRebuildingDstFinish(context.Context, *ReplicaRebuildingDstFinishRequest) (*emptypb.Empty, error)
 	ReplicaRebuildingDstSnapshotCreate(context.Context, *SnapshotRequest) (*emptypb.Empty, error)
-	ReplicaRebuildingDstSnapshotRevert(context.Context, *SnapshotRequest) (*emptypb.Empty, error)
+	ReplicaRebuildingDstSnapshotRevert(context.Context, *SnapshotRequest) (*ReplicaRebuildingDstSnapshotRevertResponse, error)
 	ReplicaBackupCreate(context.Context, *BackupCreateRequest) (*BackupCreateResponse, error)
 	ReplicaBackupStatus(context.Context, *BackupStatusRequest) (*BackupStatusResponse, error)
 	ReplicaBackupRestore(context.Context, *ReplicaBackupRestoreRequest) (*emptypb.Empty, error)
@@ -657,7 +657,7 @@ func (UnimplementedSPDKServiceServer) ReplicaList(context.Context, *emptypb.Empt
 func (UnimplementedSPDKServiceServer) ReplicaWatch(*emptypb.Empty, SPDKService_ReplicaWatchServer) error {
 	return status.Errorf(codes.Unimplemented, "method ReplicaWatch not implemented")
 }
-func (UnimplementedSPDKServiceServer) ReplicaRebuildingSrcStart(context.Context, *ReplicaRebuildingSrcStartRequest) (*emptypb.Empty, error) {
+func (UnimplementedSPDKServiceServer) ReplicaRebuildingSrcStart(context.Context, *ReplicaRebuildingSrcStartRequest) (*ReplicaRebuildingSrcStartResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ReplicaRebuildingSrcStart not implemented")
 }
 func (UnimplementedSPDKServiceServer) ReplicaRebuildingSrcFinish(context.Context, *ReplicaRebuildingSrcFinishRequest) (*emptypb.Empty, error) {
@@ -681,7 +681,7 @@ func (UnimplementedSPDKServiceServer) ReplicaRebuildingDstFinish(context.Context
 func (UnimplementedSPDKServiceServer) ReplicaRebuildingDstSnapshotCreate(context.Context, *SnapshotRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ReplicaRebuildingDstSnapshotCreate not implemented")
 }
-func (UnimplementedSPDKServiceServer) ReplicaRebuildingDstSnapshotRevert(context.Context, *SnapshotRequest) (*emptypb.Empty, error) {
+func (UnimplementedSPDKServiceServer) ReplicaRebuildingDstSnapshotRevert(context.Context, *SnapshotRequest) (*ReplicaRebuildingDstSnapshotRevertResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ReplicaRebuildingDstSnapshotRevert not implemented")
 }
 func (UnimplementedSPDKServiceServer) ReplicaBackupCreate(context.Context, *BackupCreateRequest) (*BackupCreateResponse, error) {

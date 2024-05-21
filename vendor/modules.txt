@@ -257,7 +257,7 @@ github.com/longhorn/go-iscsi-helper/iscsidev
 github.com/longhorn/go-iscsi-helper/longhorndev
 github.com/longhorn/go-iscsi-helper/types
 github.com/longhorn/go-iscsi-helper/util
-# github.com/longhorn/go-spdk-helper v0.0.0-20240514082311-4069f4804017
+# github.com/longhorn/go-spdk-helper v0.0.0-20240514082311-4069f4804017 => github.com/shuo-wu/go-spdk-helper v0.0.0-20240516043145-968448f04f51
 ## explicit; go 1.22.0
 github.com/longhorn/go-spdk-helper/pkg/types
 # github.com/longhorn/longhorn-engine v1.7.0-dev.0.20240514224711-e39b7f0313b2
@@ -267,7 +267,7 @@ github.com/longhorn/longhorn-engine/pkg/meta
 github.com/longhorn/longhorn-engine/pkg/replica/client
 github.com/longhorn/longhorn-engine/pkg/types
 github.com/longhorn/longhorn-engine/pkg/util
-# github.com/longhorn/longhorn-instance-manager v1.7.0-dev.0.20240518031349-846c2f06887b
+# github.com/longhorn/longhorn-instance-manager v1.7.0-dev.0.20240518031349-846c2f06887b => github.com/shuo-wu/longhorn-instance-manager v0.0.0-20240523000313-b92a372de952
 ## explicit; go 1.22.2
 github.com/longhorn/longhorn-instance-manager/pkg/api
 github.com/longhorn/longhorn-instance-manager/pkg/client
@@ -278,7 +278,7 @@ github.com/longhorn/longhorn-instance-manager/pkg/util
 ## explicit; go 1.22.2
 github.com/longhorn/longhorn-share-manager/pkg/client
 github.com/longhorn/longhorn-share-manager/pkg/types
-# github.com/longhorn/types v0.0.0-20240510221052-ab949bbedea3
+# github.com/longhorn/types v0.0.0-20240510221052-ab949bbedea3 => github.com/shuo-wu/types v0.0.0-20240516043003-09838e4776cb
 ## explicit; go 1.21
 github.com/longhorn/types/pkg/generated/bimrpc
 github.com/longhorn/types/pkg/generated/enginerpc
@@ -1575,6 +1575,10 @@ sigs.k8s.io/structured-merge-diff/v4/value
 # sigs.k8s.io/yaml v1.3.0
 ## explicit; go 1.12
 sigs.k8s.io/yaml
+# github.com/longhorn/go-spdk-helper => github.com/shuo-wu/go-spdk-helper v0.0.0-20240516043145-968448f04f51
+# github.com/longhorn/longhorn-instance-manager => github.com/shuo-wu/longhorn-instance-manager v0.0.0-20240523000313-b92a372de952
+# github.com/longhorn/longhorn-spdk-engine => github.com/shuo-wu/longhorn-spdk-engine v0.0.0-20240523000029-2452e799eb84
+# github.com/longhorn/types => github.com/shuo-wu/types v0.0.0-20240516043003-09838e4776cb
 # k8s.io/api => k8s.io/api v0.30.1
 # k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.30.1
 # k8s.io/apimachinery => k8s.io/apimachinery v0.30.1
