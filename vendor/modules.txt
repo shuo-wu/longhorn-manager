@@ -265,7 +265,7 @@ github.com/longhorn/go-iscsi-helper/iscsidev
 github.com/longhorn/go-iscsi-helper/longhorndev
 github.com/longhorn/go-iscsi-helper/types
 github.com/longhorn/go-iscsi-helper/util
-# github.com/longhorn/go-spdk-helper v0.0.0-20241208150421-1582c36b5523
+# github.com/longhorn/go-spdk-helper v0.0.0-20241209014045-079275cb3845
 ## explicit; go 1.22.7
 github.com/longhorn/go-spdk-helper/pkg/types
 # github.com/longhorn/longhorn-engine v1.8.0-dev-20241201
@@ -275,7 +275,7 @@ github.com/longhorn/longhorn-engine/pkg/meta
 github.com/longhorn/longhorn-engine/pkg/replica/client
 github.com/longhorn/longhorn-engine/pkg/types
 github.com/longhorn/longhorn-engine/pkg/util
-# github.com/longhorn/longhorn-instance-manager v1.8.0-dev-20241201
+# github.com/longhorn/longhorn-instance-manager v1.8.0-dev-20241201 => github.com/shuo-wu/longhorn-instance-manager v0.0.0-20241211003924-5061c30d343f
 ## explicit; go 1.22.7
 github.com/longhorn/longhorn-instance-manager/pkg/api
 github.com/longhorn/longhorn-instance-manager/pkg/client
@@ -286,7 +286,7 @@ github.com/longhorn/longhorn-instance-manager/pkg/util
 ## explicit; go 1.22.7
 github.com/longhorn/longhorn-share-manager/pkg/client
 github.com/longhorn/longhorn-share-manager/pkg/types
-# github.com/longhorn/types v0.0.0-20241208031854-891e672bc453
+# github.com/longhorn/types v0.0.0-20241208031854-891e672bc453 => github.com/shuo-wu/types v0.0.0-20241210012028-d800ec628133
 ## explicit; go 1.22.7
 github.com/longhorn/types/pkg/generated/bimrpc
 github.com/longhorn/types/pkg/generated/enginerpc
@@ -1616,6 +1616,9 @@ sigs.k8s.io/structured-merge-diff/v4/value
 ## explicit; go 1.12
 sigs.k8s.io/yaml
 sigs.k8s.io/yaml/goyaml.v2
+# github.com/longhorn/longhorn-instance-manager => github.com/shuo-wu/longhorn-instance-manager v0.0.0-20241211003924-5061c30d343f
+# github.com/longhorn/longhorn-spdk-engine => github.com/shuo-wu/longhorn-spdk-engine v0.0.0-20241211002303-dbb48ea161de
+# github.com/longhorn/types => github.com/shuo-wu/types v0.0.0-20241210012028-d800ec628133
 # k8s.io/api => k8s.io/api v0.31.3
 # k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.31.3
 # k8s.io/apimachinery => k8s.io/apimachinery v0.31.3
