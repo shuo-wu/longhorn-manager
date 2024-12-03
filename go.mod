@@ -4,6 +4,11 @@ go 1.23.1
 
 toolchain go1.23.4
 
+replace (
+	github.com/longhorn/longhorn-instance-manager => github.com/shuo-wu/longhorn-instance-manager v0.0.0-20241221010736-e78d54cf1bdf
+	github.com/longhorn/longhorn-spdk-engine => github.com/shuo-wu/longhorn-spdk-engine v0.0.0-20241220193646-793fe7001495
+)
+
 // Replace directives are required for dependencies in this section because:
 // - This module imports k8s.io/kubernetes.
 // - The development for all of these dependencies is done at kubernetes/staging and then synced to other repos.
@@ -83,7 +88,7 @@ require (
 	golang.org/x/net v0.33.0
 	golang.org/x/sys v0.28.0
 	golang.org/x/time v0.8.0
-	google.golang.org/grpc v1.69.0
+	google.golang.org/grpc v1.69.2
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.32.0
@@ -110,7 +115,7 @@ require (
 	github.com/google/gnostic-models v0.6.9 // indirect
 	github.com/klauspost/compress v1.17.11 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
-	github.com/longhorn/types v0.0.0-20241217083824-2e0ecb487ccf // indirect
+	github.com/longhorn/types v0.0.0-20241220104939-0d566342b51d // indirect
 	github.com/mitchellh/go-ps v1.0.0 // indirect
 	github.com/moby/sys/userns v0.1.0 // indirect
 	github.com/moby/term v0.5.0 // indirect
@@ -143,7 +148,7 @@ require (
 	github.com/emicklei/go-restful/v3 v3.12.1 // indirect
 	github.com/evanphx/json-patch v5.9.0+incompatible // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
-	github.com/fsnotify/fsnotify v1.7.0 // indirect
+	github.com/fsnotify/fsnotify v1.8.0 // indirect
 	github.com/gammazero/deque v1.0.0 // indirect
 	github.com/gammazero/workerpool v1.1.3 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
