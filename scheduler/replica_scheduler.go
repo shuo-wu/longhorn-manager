@@ -568,7 +568,14 @@ func filterActiveReplicas(replicas map[string]*longhorn.Replica) map[string]*lon
 func (rcs *ReplicaScheduler) CheckAndReuseFailedReplica(replicas map[string]*longhorn.Replica, volume *longhorn.Volume, hardNodeAffinity string) (*longhorn.Replica, error) {
 	// TODO: Remove it once we can reuse failed replicas during v2 rebuilding
 	if types.IsDataEngineV2(volume.Spec.DataEngine) {
-		return nil, nil
+		v2DataEngineFastRebuilding, err := rcs.ds.GetSettingAsBool(types.SettingNameV2DataEngineFastRebuilding)
+		if err != nil {
+			logrus.WithError(err).Warn("Failed to get the setting for v2 data engine fast rebuilding, will consider it as false")
+			v2DataEngineFastRebuilding = false
+		}
+		if !v2DataEngineFastRebuilding {
+			return nil, nil
+		}
 	}
 
 	replicas = filterActiveReplicas(replicas)

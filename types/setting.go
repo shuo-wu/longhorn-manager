@@ -135,6 +135,7 @@ const (
 	SettingNameV2DataEngineCPUMask                                      = SettingName("v2-data-engine-cpu-mask")
 	SettingNameV2DataEngineLogLevel                                     = SettingName("v2-data-engine-log-level")
 	SettingNameV2DataEngineLogFlags                                     = SettingName("v2-data-engine-log-flags")
+	SettingNameV2DataEngineFastRebuilding                               = SettingName("v2-data-engine-fast-rebuilding")
 	SettingNameFreezeFilesystemForSnapshot                              = SettingName("freeze-filesystem-for-snapshot")
 	SettingNameAutoCleanupSnapshotWhenDeleteBackup                      = SettingName("auto-cleanup-when-delete-backup")
 	SettingNameDefaultMinNumberOfBackingImageCopies                     = SettingName("default-min-number-of-backing-image-copies")
@@ -225,6 +226,7 @@ var (
 		SettingNameV2DataEngineCPUMask,
 		SettingNameV2DataEngineLogLevel,
 		SettingNameV2DataEngineLogFlags,
+		SettingNameV2DataEngineFastRebuilding,
 		SettingNameReplicaDiskSoftAntiAffinity,
 		SettingNameAllowEmptyNodeSelectorVolume,
 		SettingNameAllowEmptyDiskSelectorVolume,
@@ -347,6 +349,7 @@ var (
 		SettingNameV2DataEngineCPUMask:                                      SettingDefinitionV2DataEngineCPUMask,
 		SettingNameV2DataEngineLogLevel:                                     SettingDefinitionV2DataEngineLogLevel,
 		SettingNameV2DataEngineLogFlags:                                     SettingDefinitionV2DataEngineLogFlags,
+		SettingNameV2DataEngineFastRebuilding:                               SettingDefinitionV2DataEngineFastRebuilding,
 		SettingNameReplicaDiskSoftAntiAffinity:                              SettingDefinitionReplicaDiskSoftAntiAffinity,
 		SettingNameAllowEmptyNodeSelectorVolume:                             SettingDefinitionAllowEmptyNodeSelectorVolume,
 		SettingNameAllowEmptyDiskSelectorVolume:                             SettingDefinitionAllowEmptyDiskSelectorVolume,
@@ -1260,12 +1263,12 @@ var (
 
 	SettingDefinitionFastReplicaRebuildEnabled = SettingDefinition{
 		DisplayName: "Fast Replica Rebuild Enabled",
-		Description: "This setting enables the fast replica rebuilding feature. It relies on the checksums of snapshot disk files, so setting the snapshot-data-integrity to **enable** or **fast-check** is a prerequisite.",
+		Description: "This setting enables the fast replica rebuilding feature, which will try to reuse the existing data on a failed replica rather than directly creating a new replica for a degraded volume.",
 		Category:    SettingCategoryGeneral,
 		Type:        SettingTypeBool,
 		Required:    true,
 		ReadOnly:    false,
-		Default:     "true",
+		Default:     "false",
 	}
 
 	SettingDefinitionReplicaFileSyncHTTPClientTimeout = SettingDefinition{
@@ -1475,6 +1478,16 @@ var (
 		Required:    false,
 		ReadOnly:    false,
 		Default:     "",
+	}
+
+	SettingDefinitionV2DataEngineFastRebuilding = SettingDefinition{
+		DisplayName: "V2 Data Engine Fast Rebuilding",
+		Description: "Enable the fast rebuilding feature for V2 Data Engine.",
+		Category:    SettingCategoryV2DataEngine,
+		Type:        SettingTypeBool,
+		Required:    true,
+		ReadOnly:    false,
+		Default:     "false",
 	}
 
 	SettingDefinitionAutoCleanupSnapshotWhenDeleteBackup = SettingDefinition{
