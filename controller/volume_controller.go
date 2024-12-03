@@ -4892,7 +4892,12 @@ func (c *VolumeController) shouldCleanUpFailedReplica(v *longhorn.Volume, r *lon
 	}
 	// TODO: Remove it once we can reuse failed replicas during v2 rebuilding
 	if types.IsDataEngineV2(v.Spec.DataEngine) {
-		return true
+		v2DataEngineFastRebuilding, err := c.ds.GetSettingAsBool(types.SettingNameV2DataEngineFastRebuilding)
+		if err != nil {
+			log.WithError(err).Warn("Failed to get the setting for v2 data engine fast rebuilding, will consider it as false")
+			v2DataEngineFastRebuilding = false
+		}
+		return !v2DataEngineFastRebuilding
 	}
 	// Failed too long ago to be useful during a rebuild.
 	if v.Spec.StaleReplicaTimeout > 0 &&
