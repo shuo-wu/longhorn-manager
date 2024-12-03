@@ -4,6 +4,12 @@ go 1.23
 
 toolchain go1.23.3
 
+replace (
+	github.com/longhorn/longhorn-instance-manager => github.com/shuo-wu/longhorn-instance-manager v0.0.0-20241204005602-c59171e0a0aa
+	github.com/longhorn/longhorn-spdk-engine => github.com/shuo-wu/longhorn-spdk-engine v0.0.0-20241204005459-8b0e4b43a39f
+	github.com/longhorn/types => github.com/shuo-wu/types v0.0.0-20241203092359-7c7248cca135
+)
+
 // Replace directives are required for dependencies in this section because:
 // - This module imports k8s.io/kubernetes.
 // - The development for all of these dependencies is done at kubernetes/staging and then synced to other repos.
