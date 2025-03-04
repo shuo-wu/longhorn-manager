@@ -399,7 +399,7 @@ func getBinaryAndArgsForEngineProcessCreation(e *longhorn.Engine,
 }
 
 func getBinaryAndArgsForReplicaProcessCreation(r *longhorn.Replica,
-	dataPath, backingImagePath string, dataLocality longhorn.DataLocality, portCount, engineCLIAPIVersion int) (string, []string) {
+	dataPath, backingImagePath string, dataLocality longhorn.DataLocality, portCount, engineCLIAPIVersion int, isLocal bool) (string, []string) {
 
 	args := []string{
 		"replica", types.GetReplicaMountedDataPath(dataPath),
@@ -410,6 +410,9 @@ func getBinaryAndArgsForReplicaProcessCreation(r *longhorn.Replica,
 	}
 	if r.Spec.RevisionCounterDisabled {
 		args = append(args, "--disableRevCounter")
+	}
+	if isLocal {
+		args = append(args, "--is-local")
 	}
 	if engineCLIAPIVersion >= 7 {
 		if engineCLIAPIVersion < 9 {
@@ -529,6 +532,8 @@ type ReplicaInstanceCreateRequest struct {
 	BackingImagePath    string
 	DataLocality        longhorn.DataLocality
 	EngineCLIAPIVersion int
+
+	IsLocal bool
 }
 
 // ReplicaInstanceCreate creates a new replica instance
@@ -540,7 +545,7 @@ func (c *InstanceManagerClient) ReplicaInstanceCreate(req *ReplicaInstanceCreate
 	binary := ""
 	args := []string{}
 	if types.IsDataEngineV1(req.Replica.Spec.DataEngine) {
-		binary, args = getBinaryAndArgsForReplicaProcessCreation(req.Replica, req.DataPath, req.BackingImagePath, req.DataLocality, DefaultReplicaPortCountV1, req.EngineCLIAPIVersion)
+		binary, args = getBinaryAndArgsForReplicaProcessCreation(req.Replica, req.DataPath, req.BackingImagePath, req.DataLocality, DefaultReplicaPortCountV1, req.EngineCLIAPIVersion, req.IsLocal)
 	}
 
 	if c.GetAPIVersion() < 4 {

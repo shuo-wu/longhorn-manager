@@ -378,6 +378,8 @@ func (rc *ReplicaController) CreateInstance(obj interface{}) (*longhorn.Instance
 		return nil, err
 	}
 
+	isLocal := v.Spec.NodeID == r.Spec.NodeID
+
 	return c.ReplicaInstanceCreate(&engineapi.ReplicaInstanceCreateRequest{
 		Replica:             r,
 		DiskName:            diskName,
@@ -385,6 +387,7 @@ func (rc *ReplicaController) CreateInstance(obj interface{}) (*longhorn.Instance
 		BackingImagePath:    backingImagePath,
 		DataLocality:        v.Spec.DataLocality,
 		EngineCLIAPIVersion: cliAPIVersion,
+		IsLocal:             isLocal,
 	})
 }
 
