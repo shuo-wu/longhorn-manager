@@ -122,12 +122,8 @@ github.com/longhorn/go-spdk-helper v0.0.2 h1:cK7obTyCI1ytm0SMaUEjwsHeX6hK+82kPju
 github.com/longhorn/go-spdk-helper v0.0.2/go.mod h1:lZYWKf8YNOV4TSf57u8Tj1ilDQLQlW2M/HgFlecoRno=
 github.com/longhorn/longhorn-engine v1.9.0 h1:NSQNwAFQZdF+nywTJbyW0qJBKIWPE6J2Vy0qWCsup4I=
 github.com/longhorn/longhorn-engine v1.9.0/go.mod h1:dvVqPWauvH2hrMlI6sDd3y8wsA4wsAtCX7WB+JwcbwA=
-github.com/longhorn/longhorn-instance-manager v1.10.0-dev-20250518.0.20250519060809-955e286a739c h1:W9/fwmx/uhCzZfE9g7Lf6i4VaD6fl20IgeQF1cFblrU=
-github.com/longhorn/longhorn-instance-manager v1.10.0-dev-20250518.0.20250519060809-955e286a739c/go.mod h1:8gfwbZRPzNazr3eLPm3/JS2pQIdflj0yFn1J4E4vLy8=
 github.com/longhorn/longhorn-share-manager v1.9.0 h1:t6WnF9CzN7ivNJD9iHKjyci13Uy1Z9nWO8xDudYMtys=
 github.com/longhorn/longhorn-share-manager v1.9.0/go.mod h1:9tf9Gh+YWTfDLEC8/qY25LmWgNelKF/6GK6rxNzA0vg=
-github.com/longhorn/types v0.0.0-20250519005747-57ce2e5a3ee5 h1:FG0Ym++7WnQpJHaUfRAR2pPZ6K4ZOJa0jOX7DCKwBPA=
-github.com/longhorn/types v0.0.0-20250519005747-57ce2e5a3ee5/go.mod h1:3jHuVDtpkXQzpnp4prguDBskVRric2kmF8aSPkRJ4jw=
 github.com/mailru/easyjson v0.9.0 h1:PrnmzHw7262yW8sTBwxi1PdJA3Iw/EKBa8psRf7d9a4=
 github.com/mailru/easyjson v0.9.0/go.mod h1:1+xMtQp2MRNVL/V1bOzuP3aP8VNwRW55fQUto+XFtTU=
 github.com/matttproud/golang_protobuf_extensions v1.0.1/go.mod h1:D8He9yQNgCq6Z5Ld7szi9bcBfOoFv/3dc6xSMkL2PC0=
@@ -197,6 +193,10 @@ github.com/russross/blackfriday/v2 v2.1.0 h1:JIOH55/0cWyOuilr9/qlrm0BSXldqnqwMsf
 github.com/russross/blackfriday/v2 v2.1.0/go.mod h1:+Rmxgy9KzJVeS9/2gXHxylqXiyQDYRxCVz55jmeOWTM=
 github.com/shirou/gopsutil/v3 v3.24.5 h1:i0t8kL+kQTvpAYToeuiVk3TgDeKOFioZO3Ztz/iZ9pI=
 github.com/shirou/gopsutil/v3 v3.24.5/go.mod h1:bsoOS1aStSs9ErQ1WWfxllSeS1K5D+U30r2NfcubMVk=
+github.com/shuo-wu/longhorn-instance-manager v0.0.0-20250606220042-c5f02e824ded h1:Vm6Yy+4cOgRheCfJUz+FnxrP5EatXOECFJZUDtHJaFY=
+github.com/shuo-wu/longhorn-instance-manager v0.0.0-20250606220042-c5f02e824ded/go.mod h1:NdRdakGmOrXO9dzf2RGWCphdUDCDgmwqHBWzT226Ir4=
+github.com/shuo-wu/types v0.0.0-20250606215338-3d5ead429408 h1:VvPrrNifk72m3+gjd4ThL+ORWQqkILqBEbD7crz/Bdw=
+github.com/shuo-wu/types v0.0.0-20250606215338-3d5ead429408/go.mod h1:3jHuVDtpkXQzpnp4prguDBskVRric2kmF8aSPkRJ4jw=
 github.com/sirupsen/logrus v1.9.3 h1:dueUQJ1C2q9oE3F7wvmSGAaVtTmUizReu6fjN8uqzbQ=
 github.com/sirupsen/logrus v1.9.3/go.mod h1:naHLuLoDiP4jHNo9R0sCBMtWGeIprob74mVsIT4qYEQ=
 github.com/slok/goresilience v0.2.0 h1:dagdIiWlhTm7BK/r/LRKz+zvw0SCNk+nHf7obdsbzxQ=

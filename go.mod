@@ -20,6 +20,12 @@ toolchain go1.24.3
 // necessary. However, it is better to include all of them for consistency.
 
 replace (
+	github.com/longhorn/longhorn-instance-manager => github.com/shuo-wu/longhorn-instance-manager v0.0.0-20250606220042-c5f02e824ded
+	github.com/longhorn/longhorn-spdk-engine => github.com/shuo-wu/longhorn-spdk-engine v0.0.0-20250606215517-8bc113fa5b30
+	github.com/longhorn/types => github.com/shuo-wu/types v0.0.0-20250606215338-3d5ead429408
+)
+
+replace (
 	k8s.io/api => k8s.io/api v0.33.1
 	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.33.1
 	k8s.io/apimachinery => k8s.io/apimachinery v0.33.1
