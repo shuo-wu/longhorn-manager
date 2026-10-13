@@ -39,7 +39,11 @@ func (s *Server) EngineCreate(ctx context.Context, req *spdkrpc.EngineCreateRequ
 	}
 
 	if e == nil {
-		s.engineMap[req.Name] = NewEngine(req.Name, req.VolumeName, req.Frontend, req.SpecSize, s.updateChs[types.InstanceTypeEngine], req.SnapshotMaxCount, s.newServiceClient)
+		// Select the internal engine<->replica NVMe-oF transport. Unset (TCP=0)
+		// preserves historical TCP behavior. Must match the transport the replicas
+		// used to expose their heads.
+		transportType := nvmeTransportFromProto(req.TransportType)
+		s.engineMap[req.Name] = NewEngine(req.Name, req.VolumeName, req.Frontend, transportType, req.SpecSize, s.updateChs[types.InstanceTypeEngine], req.SnapshotMaxCount, s.newServiceClient)
 		e = s.engineMap[req.Name]
 	}
 
@@ -729,7 +733,12 @@ func (s *Server) EngineBackupRestore(ctx context.Context, req *spdkrpc.EngineBac
 		"specSize":       e.SpecSize,
 	}).Info("Creating temporary engine frontend for backup restore request")
 
-	return tempEF.BackupRestore(e, spdkClient, req.BackupUrl, req.Credential, req.ConcurrentLimit, portAllocator)
+	resp, err := tempEF.BackupRestore(e, spdkClient, req.BackupUrl, req.Credential, req.ConcurrentLimit, portAllocator)
+	if err != nil && resp != nil && len(resp.Errors) > 0 {
+		// The client turns per-replica errors into a TaskError so the caller can classify them like v1.
+		return resp, nil
+	}
+	return resp, err
 }
 
 func (s *Server) EngineRestoreStatus(ctx context.Context, req *spdkrpc.RestoreStatusRequest) (*spdkrpc.RestoreStatusResponse, error) {

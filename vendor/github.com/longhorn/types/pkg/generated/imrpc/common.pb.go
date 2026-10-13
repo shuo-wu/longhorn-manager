@@ -210,6 +210,56 @@ func (DataLayoutType) EnumDescriptor() ([]byte, []int) {
 	return file_imrpc_common_proto_rawDescGZIP(), []int{3}
 }
 
+// TransportType is the NVMe-oF transport for the internal engine<->replica
+// data fabric, forwarded from SpdkInstanceSpec to spdkrpc.EngineCreateRequest /
+// ReplicaCreateRequest. Mirrors spdkrpc.TransportType but defined here to
+// keep imrpc and spdkrpc decoupled. Unset (0) == TCP preserves historical behavior.
+type TransportType int32
+
+const (
+	TransportType_TRANSPORT_TYPE_TCP  TransportType = 0
+	TransportType_TRANSPORT_TYPE_RDMA TransportType = 1
+)
+
+// Enum value maps for TransportType.
+var (
+	TransportType_name = map[int32]string{
+		0: "TRANSPORT_TYPE_TCP",
+		1: "TRANSPORT_TYPE_RDMA",
+	}
+	TransportType_value = map[string]int32{
+		"TRANSPORT_TYPE_TCP":  0,
+		"TRANSPORT_TYPE_RDMA": 1,
+	}
+)
+
+func (x TransportType) Enum() *TransportType {
+	p := new(TransportType)
+	*p = x
+	return p
+}
+
+func (x TransportType) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (TransportType) Descriptor() protoreflect.EnumDescriptor {
+	return file_imrpc_common_proto_enumTypes[4].Descriptor()
+}
+
+func (TransportType) Type() protoreflect.EnumType {
+	return &file_imrpc_common_proto_enumTypes[4]
+}
+
+func (x TransportType) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use TransportType.Descriptor instead.
+func (TransportType) EnumDescriptor() ([]byte, []int) {
+	return file_imrpc_common_proto_rawDescGZIP(), []int{4}
+}
+
 // ShardEndpoint carries the transport address and pre-resolved slot index for
 // a shard, as passed to the instance manager for ShardGroup process creation.
 // address is "ip:port" - passed to connectNVMfBdev which calls
@@ -474,11 +524,15 @@ var file_imrpc_common_proto_rawDesc = []byte{
 	0x1b, 0x44, 0x41, 0x54, 0x41, 0x5f, 0x4c, 0x41, 0x59, 0x4f, 0x55, 0x54, 0x5f, 0x54, 0x59, 0x50,
 	0x45, 0x5f, 0x52, 0x45, 0x50, 0x4c, 0x49, 0x43, 0x41, 0x54, 0x45, 0x44, 0x10, 0x00, 0x12, 0x1c,
 	0x0a, 0x18, 0x44, 0x41, 0x54, 0x41, 0x5f, 0x4c, 0x41, 0x59, 0x4f, 0x55, 0x54, 0x5f, 0x54, 0x59,
-	0x50, 0x45, 0x5f, 0x53, 0x48, 0x41, 0x52, 0x44, 0x45, 0x44, 0x10, 0x01, 0x42, 0x2f, 0x5a, 0x2d,
-	0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x6c, 0x6f, 0x6e, 0x67, 0x68,
-	0x6f, 0x72, 0x6e, 0x2f, 0x74, 0x79, 0x70, 0x65, 0x73, 0x2f, 0x70, 0x6b, 0x67, 0x2f, 0x67, 0x65,
-	0x6e, 0x65, 0x72, 0x61, 0x74, 0x65, 0x64, 0x2f, 0x69, 0x6d, 0x72, 0x70, 0x63, 0x62, 0x06, 0x70,
-	0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x50, 0x45, 0x5f, 0x53, 0x48, 0x41, 0x52, 0x44, 0x45, 0x44, 0x10, 0x01, 0x2a, 0x40, 0x0a, 0x0d,
+	0x54, 0x72, 0x61, 0x6e, 0x73, 0x70, 0x6f, 0x72, 0x74, 0x54, 0x79, 0x70, 0x65, 0x12, 0x16, 0x0a,
+	0x12, 0x54, 0x52, 0x41, 0x4e, 0x53, 0x50, 0x4f, 0x52, 0x54, 0x5f, 0x54, 0x59, 0x50, 0x45, 0x5f,
+	0x54, 0x43, 0x50, 0x10, 0x00, 0x12, 0x17, 0x0a, 0x13, 0x54, 0x52, 0x41, 0x4e, 0x53, 0x50, 0x4f,
+	0x52, 0x54, 0x5f, 0x54, 0x59, 0x50, 0x45, 0x5f, 0x52, 0x44, 0x4d, 0x41, 0x10, 0x01, 0x42, 0x2f,
+	0x5a, 0x2d, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x6c, 0x6f, 0x6e,
+	0x67, 0x68, 0x6f, 0x72, 0x6e, 0x2f, 0x74, 0x79, 0x70, 0x65, 0x73, 0x2f, 0x70, 0x6b, 0x67, 0x2f,
+	0x67, 0x65, 0x6e, 0x65, 0x72, 0x61, 0x74, 0x65, 0x64, 0x2f, 0x69, 0x6d, 0x72, 0x70, 0x63, 0x62,
+	0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -493,21 +547,22 @@ func file_imrpc_common_proto_rawDescGZIP() []byte {
 	return file_imrpc_common_proto_rawDescData
 }
 
-var file_imrpc_common_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
+var file_imrpc_common_proto_enumTypes = make([]protoimpl.EnumInfo, 5)
 var file_imrpc_common_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_imrpc_common_proto_goTypes = []interface{}{
 	(BackendStoreDriver)(0),   // 0: imrpc.BackendStoreDriver
 	(DataEngine)(0),           // 1: imrpc.DataEngine
 	(CloneMode)(0),            // 2: imrpc.CloneMode
 	(DataLayoutType)(0),       // 3: imrpc.DataLayoutType
-	(*ShardEndpoint)(nil),     // 4: imrpc.ShardEndpoint
-	(*ShardGroupSpec)(nil),    // 5: imrpc.ShardGroupSpec
-	(*LinkedCloneSource)(nil), // 6: imrpc.LinkedCloneSource
-	nil,                       // 7: imrpc.ShardGroupSpec.ShardsEntry
+	(TransportType)(0),        // 4: imrpc.TransportType
+	(*ShardEndpoint)(nil),     // 5: imrpc.ShardEndpoint
+	(*ShardGroupSpec)(nil),    // 6: imrpc.ShardGroupSpec
+	(*LinkedCloneSource)(nil), // 7: imrpc.LinkedCloneSource
+	nil,                       // 8: imrpc.ShardGroupSpec.ShardsEntry
 }
 var file_imrpc_common_proto_depIdxs = []int32{
-	7, // 0: imrpc.ShardGroupSpec.shards:type_name -> imrpc.ShardGroupSpec.ShardsEntry
-	4, // 1: imrpc.ShardGroupSpec.ShardsEntry.value:type_name -> imrpc.ShardEndpoint
+	8, // 0: imrpc.ShardGroupSpec.shards:type_name -> imrpc.ShardGroupSpec.ShardsEntry
+	5, // 1: imrpc.ShardGroupSpec.ShardsEntry.value:type_name -> imrpc.ShardEndpoint
 	2, // [2:2] is the sub-list for method output_type
 	2, // [2:2] is the sub-list for method input_type
 	2, // [2:2] is the sub-list for extension type_name
@@ -563,7 +618,7 @@ func file_imrpc_common_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_imrpc_common_proto_rawDesc,
-			NumEnums:      4,
+			NumEnums:      5,
 			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   0,
