@@ -18,6 +18,13 @@ go 1.27
 // necessary. However, it is better to include all of them for consistency.
 
 replace (
+	github.com/longhorn/go-spdk-helper => github.com/shuo-wu/go-spdk-helper v0.0.0-20261013010553-d1d9cf33f455
+	github.com/longhorn/longhorn-instance-manager => github.com/shuo-wu/longhorn-instance-manager v0.0.0-20261013055452-64cbc023b00a
+	github.com/longhorn/longhorn-spdk-engine => github.com/shuo-wu/longhorn-spdk-engine v0.0.0-20261013055358-cd57c4192165
+	github.com/longhorn/types => github.com/shuo-wu/types v0.0.0-20261001182949-05d5fe582fc1
+)
+
+replace (
 	github.com/henrygd/beszel => github.com/longhorn/beszel v0.16.2-0.20260114090315-332709c32c7d
 	k8s.io/api => k8s.io/api v0.37.1
 	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.37.1

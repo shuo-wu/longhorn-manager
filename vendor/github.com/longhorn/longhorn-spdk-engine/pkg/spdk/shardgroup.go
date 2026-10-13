@@ -13,14 +13,13 @@ import (
 	grpccodes "google.golang.org/grpc/codes"
 	grpcstatus "google.golang.org/grpc/status"
 
-	"github.com/longhorn/go-spdk-helper/pkg/jsonrpc"
-	"github.com/longhorn/types/pkg/generated/spdkrpc"
-
 	commonbitmap "github.com/longhorn/go-common-libs/bitmap"
 	commonnet "github.com/longhorn/go-common-libs/net"
+	"github.com/longhorn/go-spdk-helper/pkg/jsonrpc"
 	spdkclient "github.com/longhorn/go-spdk-helper/pkg/spdk/client"
 	spdktypes "github.com/longhorn/go-spdk-helper/pkg/spdk/types"
 	helpertypes "github.com/longhorn/go-spdk-helper/pkg/types"
+	"github.com/longhorn/types/pkg/generated/spdkrpc"
 
 	"github.com/longhorn/longhorn-spdk-engine/pkg/api"
 	"github.com/longhorn/longhorn-spdk-engine/pkg/types"
@@ -599,7 +598,7 @@ func (sg *ShardGroup) Create(spdkClient *spdkclient.Client, superiorPortAllocato
 			connectAttempts = salvageConnectMaxRetries
 		}
 		bdevName, connErr := connectNVMfBdev(spdkClient, controllerName, endpoint.Address,
-			ecShardCtrlrLossTimeoutSec, ecShardFastIOFailTimeoutSec, connectAttempts, retryInterval)
+			spdktypes.NvmeTransportTypeTCP, ecShardCtrlrLossTimeoutSec, ecShardFastIOFailTimeoutSec, connectAttempts, retryInterval)
 		if connErr != nil {
 			if sg.SalvageRequested {
 				sg.log.WithError(connErr).Warnf("Salvage: failed to connect shard %s at %s; marking slot %d as missing", controllerName, endpoint.Address, endpoint.SlotIndex)
@@ -716,7 +715,7 @@ func (sg *ShardGroup) Create(spdkClient *spdkclient.Client, superiorPortAllocato
 		return nil, err
 	}
 	if err := spdkClient.StartExposeBdev(sg.Nqn, sg.HeadLvolUUID, generateNGUID(sg.HeadLvolName),
-		sg.IP, strconv.Itoa(int(sg.Port)), helpertypes.InternalHostNQN); err != nil {
+		sg.IP, strconv.Itoa(int(sg.Port)), spdktypes.NvmeTransportTypeTCP, helpertypes.InternalHostNQN); err != nil {
 		return nil, errors.Wrapf(err, "failed to expose head lvol for shardgroup %s", sg.Name)
 	}
 	sg.IsExposed = true
@@ -1080,7 +1079,7 @@ func (sg *ShardGroup) Expand(spdkClient *spdkclient.Client, newSize, creationSiz
 	}
 
 	if err := spdkClient.StartExposeBdev(sg.Nqn, sg.HeadLvolUUID, generateNGUID(sg.HeadLvolName),
-		sg.IP, strconv.Itoa(int(sg.Port)), helpertypes.InternalHostNQN); err != nil {
+		sg.IP, strconv.Itoa(int(sg.Port)), spdktypes.NvmeTransportTypeTCP, helpertypes.InternalHostNQN); err != nil {
 		return errors.Wrapf(err, "failed to re-expose shardgroup %s after head-lvol resize", sg.Name)
 	}
 
@@ -1264,7 +1263,7 @@ func (sg *ShardGroup) SnapshotRevert(spdkClient *spdkclient.Client, snapshotName
 	sg.HeadLvolUUID = newHeadUUID
 
 	if err := spdkClient.StartExposeBdev(sg.Nqn, sg.HeadLvolUUID, generateNGUID(sg.HeadLvolName),
-		sg.IP, strconv.Itoa(int(sg.Port)), helpertypes.InternalHostNQN); err != nil {
+		sg.IP, strconv.Itoa(int(sg.Port)), spdktypes.NvmeTransportTypeTCP, helpertypes.InternalHostNQN); err != nil {
 		return errors.Wrapf(err, "failed to re-expose head lvol after revert")
 	}
 	sg.IsExposed = true
@@ -1355,7 +1354,7 @@ func (sg *ShardGroup) ShardReplace(spdkClient *spdkclient.Client, shardName, sha
 	}
 
 	bdevName, err := connectNVMfBdev(spdkClient, controllerName, shardAddress,
-		ecShardCtrlrLossTimeoutSec, ecShardFastIOFailTimeoutSec, maxRetries, retryInterval)
+		spdktypes.NvmeTransportTypeTCP, ecShardCtrlrLossTimeoutSec, ecShardFastIOFailTimeoutSec, maxRetries, retryInterval)
 	if err != nil {
 		return "", errors.Wrapf(err, "failed to connect replacement shard %s at %s", controllerName, shardAddress)
 	}
@@ -1575,7 +1574,6 @@ func (sg *ShardGroup) tryDiscoverExistingLvstore(spdkClient *spdkclient.Client) 
 // (for the head lvol). A ShardGroup serves one target, so it always uses one port
 // and does not use the request's port_count.
 func (sg *ShardGroup) prepareIPAndPort(superiorPortAllocator *commonbitmap.Bitmap) error {
-	// nolint: staticcheck // Keep legacy IP selection until callers migrate to the new helpers.
 	podIP, err := commonnet.GetIPForPod()
 	if err != nil {
 		return err

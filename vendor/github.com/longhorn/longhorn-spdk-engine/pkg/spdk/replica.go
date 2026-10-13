@@ -72,6 +72,10 @@ type Replica struct {
 	LvsUUID string
 	Nqn     string
 
+	// TransportType is the NVMe-oF transport this replica exposes its bdev over so the
+	// engine can connect. Defaults to TCP; set to RDMA for RoCEv2/InfiniBand.
+	TransportType spdktypes.NvmeTransportType
+
 	SpecSize   uint64
 	ActualSize uint64
 
@@ -263,6 +267,8 @@ func ServiceReplicaToProtoReplica(r *Replica) *spdkrpc.Replica {
 		PortEnd:   r.PortEnd,
 		State:     string(r.State),
 		ErrorMsg:  r.ErrorMsg,
+
+		TransportType: nvmeTransportToProto(r.TransportType),
 	}
 
 	res.Head = ServiceLvolToProtoLvol(r.Name, r.Head)
@@ -319,11 +325,12 @@ func NewReplica(ctx context.Context, replicaName, lvsName, lvsUUID string, specS
 	return &Replica{
 		ctx: ctx,
 
-		Name:    replicaName,
-		Alias:   spdktypes.GetLvolAlias(lvsName, replicaName),
-		LvsName: lvsName,
-		LvsUUID: lvsUUID,
-		Nqn:     helpertypes.GetNQN(replicaName),
+		Name:          replicaName,
+		Alias:         spdktypes.GetLvolAlias(lvsName, replicaName),
+		LvsName:       lvsName,
+		LvsUUID:       lvsUUID,
+		Nqn:           helpertypes.GetNQN(replicaName),
+		TransportType: spdktypes.NvmeTransportTypeTCP,
 
 		SpecSize: roundedSpecSize,
 		State:    types.InstanceStatePending,
@@ -363,7 +370,6 @@ func (r *Replica) GetAddress() string {
 }
 
 func (r *Replica) prepareIPAndPorts(portCount int32, superiorPortAllocator *commonbitmap.Bitmap) error {
-	// nolint: staticcheck // Keep legacy IP selection until callers migrate to the new helpers.
 	podIP, err := commonnet.GetIPForPod()
 	if err != nil {
 		return err
@@ -684,14 +690,14 @@ func (r *Replica) syncCloneReplicaInfo(spdkClient *spdkclient.Client, bdevLvolMa
 
 	actualParent := rootBdev.DriverSpecific.Lvol.BaseSnapshot
 
-	// Case 1: The chain root's parent is the expected entrypoint - also verify that
+	// Case 1: The chain root's parent is the expected entrypoint — also verify that
 	// the entrypoint itself is correctly parented to the src snapshot.
 	// The entrypoint may have become an orphaned root (empty base_snapshot) if the
 	// src replica was rebuilt: rebuildingDstShallowCopyPrepare detaches all children
 	// of a corrupted or outdated snapshot, including any clone entrypoints, before
 	// deleting or reusing the snapshot. If the instance manager restarted before
 	// RebuildingDstSnapshotCreate could re-parent the entrypoint, the orphaned
-	// entrypoint persists. The chain-root -> entrypoint link uses lvol names (not
+	// entrypoint persists. The chain-root → entrypoint link uses lvol names (not
 	// UUIDs), so it survives the rebuild even though the entrypoint is broken.
 	if actualParent == r.cloneEntrypointLvolName {
 		expectedSrcSnapshotLvolName := GetReplicaSnapshotLvolName(r.cloneSourceReplicaName, r.cloneSourceSnapshotName)
@@ -1003,7 +1009,9 @@ func getExposedPort(subsystem *spdktypes.NvmfSubsystem) (exposedPort int32, err 
 
 	port := 0
 	for _, listenAddr := range subsystem.ListenAddresses {
-		if !strings.EqualFold(string(listenAddr.Trtype), string(spdktypes.NvmeTransportTypeTCP)) {
+		// Accept either NVMe-oF transport a Longhorn replica may be exposed over.
+		if !strings.EqualFold(string(listenAddr.Trtype), string(spdktypes.NvmeTransportTypeTCP)) &&
+			!strings.EqualFold(string(listenAddr.Trtype), string(spdktypes.NvmeTransportTypeRDMA)) {
 			continue
 		}
 		port, err = strconv.Atoi(listenAddr.Trsvcid)
@@ -1343,7 +1351,7 @@ func constructSnapshotLvolMap(replicaName string, bdevLvolMap map[string]*spdkty
 			continue
 		}
 		for _, childLvolName := range bdevLvolMap[curSvcLvol.Name].DriverSpecific.Lvol.Clones {
-			// Exclude clone entrypoint lvols - they are tracked separately
+			// Exclude clone entrypoint lvols — they are tracked separately
 			if IsCloneEntrypointOfReplica(replicaName, childLvolName) || IsCloneEntrypointTmpHeadLvol(childLvolName) {
 				delete(curSvcLvol.Children, childLvolName)
 				continue
@@ -1514,7 +1522,7 @@ func (r *Replica) Create(spdkClient *spdkclient.Client, portCount int32, superio
 	}
 
 	if err := spdkClient.StartExposeBdev(r.Nqn, r.Head.UUID, generateNGUID(r.Name), r.IP, strconv.Itoa(int(r.PortStart)),
-		helpertypes.InternalHostNQN); err != nil {
+		r.TransportType, helpertypes.InternalHostNQN); err != nil {
 		return nil, err
 	}
 
@@ -1609,7 +1617,7 @@ func (r *Replica) Delete(spdkClient *spdkclient.Client, cleanupRequired bool, su
 			r.reconstructRequired = true
 		}
 
-		// Rebuild interrupted - SnapshotLvolMap is stale.
+		// Rebuild interrupted — SnapshotLvolMap is stale.
 		if r.State == types.InstanceStateStopped && wasRebuilding && !cleanupRequired {
 			r.reconstructRequired = true
 		}
@@ -1807,7 +1815,7 @@ func (r *Replica) Expand(spdkClient *spdkclient.Client, size uint64) error {
 	// If we had previously exposed the bdev, we must re-expose it after the resize.
 	if reExposeBdev {
 		if err := spdkClient.StartExposeBdev(helpertypes.GetNQN(r.Name), r.Head.UUID, generateNGUID(r.Name), r.IP, strconv.Itoa(int(r.PortStart)),
-			helpertypes.InternalHostNQN); err != nil {
+			r.TransportType, helpertypes.InternalHostNQN); err != nil {
 			return errors.Wrapf(err, "failed to start expose replica %v after expansion", r.Name)
 		}
 		r.IsExposed = true
@@ -2168,7 +2176,7 @@ func (r *Replica) SnapshotRevert(spdkClient *spdkclient.Client, snapshotName str
 		r.IsExposed = false
 
 		if err := spdkClient.StartExposeBdev(helpertypes.GetNQN(r.Name), headLvolUUID, generateNGUID(r.Name), r.IP, strconv.Itoa(int(r.PortStart)),
-			helpertypes.InternalHostNQN); err != nil {
+			r.TransportType, helpertypes.InternalHostNQN); err != nil {
 			return nil, err
 		}
 		r.IsExposed = true
@@ -2480,7 +2488,7 @@ func (r *Replica) SnapshotCloneDstStart(spdkClient *spdkclient.Client, snapshotN
 		}()
 
 		// Always notify the src replica to clear its snapshotCloningSrcCache
-		// entry - on success as completion, on failure as cleanup.
+		// entry — on success as completion, on failure as cleanup.
 		defer func() {
 			if cleanupErr := srcReplicaServiceCli.ReplicaSnapshotCloneSrcFinish(
 				r.snapshotCloningDstCache.srcReplicaName, r.Name); cleanupErr != nil {
@@ -2531,9 +2539,12 @@ func (r *Replica) SnapshotCloneDstStart(spdkClient *spdkclient.Client, snapshotN
 	}
 	r.snapshotCloningDstCache.cloningLvol = BdevLvolInfoToServiceLvol(&cloningBdevLvol)
 
+	// TODO: transient internal paths (clone here, plus rebuilding and expansion
+	// below) are always exposed/connected over NVMe-TCP for now. Evaluate honoring
+	// r.TransportType (RDMA) on these paths in a follow-up.
 	if err := spdkClient.StartExposeBdev(helpertypes.GetNQN(r.snapshotCloningDstCache.cloningLvol.Name),
 		r.snapshotCloningDstCache.cloningLvol.UUID, generateNGUID(r.snapshotCloningDstCache.cloningLvol.Name), r.IP,
-		strconv.Itoa(int(r.snapshotCloningDstCache.cloningPort)), helpertypes.InternalHostNQN); err != nil {
+		strconv.Itoa(int(r.snapshotCloningDstCache.cloningPort)), spdktypes.NvmeTransportTypeTCP, helpertypes.InternalHostNQN); err != nil {
 		return err
 	}
 	dstCloningLvolAddress := net.JoinHostPort(r.IP, strconv.Itoa(int(r.snapshotCloningDstCache.cloningPort)))
@@ -2890,7 +2901,7 @@ func (r *Replica) snapshotLinkedCloneSrcStart(spdkClient *spdkclient.Client, sna
 		epAlias := spdktypes.GetLvolAlias(r.LvsName, epLvolName)
 		epBdev, err := spdkClient.BdevLvolGetByName(epAlias, 0)
 		if err != nil {
-			// Entrypoint is in the map but missing from SPDK - stale map entry; recreate.
+			// Entrypoint is in the map but missing from SPDK — stale map entry; recreate.
 			r.log.WithError(err).Warnf("Clone entrypoint %s is in map but not found in SPDK; removing stale entry and recreating", epLvolName)
 			delete(r.cloneEntrypointMap, epLvolName)
 			epInfo = nil
@@ -2976,7 +2987,7 @@ func createCloneEntrypointLvol(spdkClient *spdkclient.Client, log *safelog.SafeL
 	}
 
 	// Step 2: Snapshot the tmp head to create the read-only entrypoint.
-	// After this: srcSnapshot -> entrypoint(read-only) -> tmpHead(writable, child of entrypoint)
+	// After this: srcSnapshot → entrypoint(read-only) → tmpHead(writable, child of entrypoint)
 	epUUID, err := spdkClient.BdevLvolSnapshot(tmpHeadUUID, epLvolName, []spdkclient.Xattr{})
 	if err != nil {
 		if _, delErr := spdkClient.BdevLvolDelete(tmpHeadAlias); delErr != nil {
@@ -3160,7 +3171,7 @@ func (r *Replica) SnapshotCloneSrcStart(spdkClient *spdkclient.Client, snapshotN
 
 	dstCloningLvolName := GetReplicaCloningLvolName(dstReplicaName)
 	dstCloningBdevName, err := connectNVMfBdev(spdkClient, dstCloningLvolName, dstCloningLvolAddress,
-		replicaCtrlrLossTimeoutSec, replicaFastIOFailTimeoutSec, maxRetries, retryInterval)
+		spdktypes.NvmeTransportTypeTCP, replicaCtrlrLossTimeoutSec, replicaFastIOFailTimeoutSec, maxRetries, retryInterval)
 	if err != nil {
 		return err
 	}
@@ -3290,7 +3301,7 @@ func (r *Replica) RebuildingSrcStart(spdkClient *spdkclient.Client, dstReplicaNa
 		return "", err
 	}
 	if err := spdkClient.StartExposeBdev(helpertypes.GetNQN(snapLvol.Name), snapLvol.UUID, generateNGUID(snapLvol.Name), r.IP, strconv.Itoa(int(port)),
-		helpertypes.InternalHostNQN); err != nil {
+		spdktypes.NvmeTransportTypeTCP, helpertypes.InternalHostNQN); err != nil {
 		return "", err
 	}
 	exposedSnapshotLvolAddress = net.JoinHostPort(r.IP, strconv.Itoa(int(port)))
@@ -3373,7 +3384,7 @@ func (r *Replica) rebuildingSrcAttachNoLock(spdkClient *spdkclient.Client, dstRe
 		return nil
 	}
 
-	r.rebuildingSrcCache.dstRebuildingBdevName, err = connectNVMfBdev(spdkClient, dstRebuildingLvolName, dstRebuildingLvolAddress, replicaCtrlrLossTimeoutSec, replicaFastIOFailTimeoutSec, maxRetries, retryInterval)
+	r.rebuildingSrcCache.dstRebuildingBdevName, err = connectNVMfBdev(spdkClient, dstRebuildingLvolName, dstRebuildingLvolAddress, spdktypes.NvmeTransportTypeTCP, replicaCtrlrLossTimeoutSec, replicaFastIOFailTimeoutSec, maxRetries, retryInterval)
 	if err != nil {
 		return errors.Wrapf(err, "failed to connect rebuilding lvol %s with address %s as a NVMe bdev for replica %s rebuilding src attach", dstRebuildingLvolName, dstRebuildingLvolAddress, r.Name)
 	}
@@ -3806,7 +3817,7 @@ func (r *Replica) RebuildingDstStart(spdkClient *spdkclient.Client, srcReplicaNa
 
 	externalSnapshotLvolName := GetReplicaSnapshotLvolName(srcReplicaName, externalSnapshotName)
 	externalSnapshotBdevName, err := connectNVMfBdev(spdkClient, externalSnapshotLvolName, externalSnapshotAddress,
-		replicaCtrlrLossTimeoutSec, replicaFastIOFailTimeoutSec, maxRetries, retryInterval)
+		spdktypes.NvmeTransportTypeTCP, replicaCtrlrLossTimeoutSec, replicaFastIOFailTimeoutSec, maxRetries, retryInterval)
 	if err != nil {
 		return "", errors.Wrapf(err, "failed to connect the external src snapshot lvol %s with address %s as a NVMf bdev for dst replica %v rebuilding start", externalSnapshotLvolName, externalSnapshotAddress, r.Name)
 	}
@@ -3870,14 +3881,14 @@ func (r *Replica) RebuildingDstStart(spdkClient *spdkclient.Client, srcReplicaNa
 	r.ActiveChain = append(r.ActiveChain, r.Head)
 
 	if err := spdkClient.StartExposeBdev(helpertypes.GetNQN(r.Name), r.Head.UUID, generateNGUID(r.Name), r.IP, strconv.Itoa(int(r.PortStart)),
-		helpertypes.InternalHostNQN); err != nil {
+		r.TransportType, helpertypes.InternalHostNQN); err != nil {
 		return "", err
 	}
 	r.IsExposed = true
 	dstHeadLvolAddress := net.JoinHostPort(r.IP, strconv.Itoa(int(r.PortStart)))
 
 	// Snapshots may be deleted below hence this cache will become stale.
-	// On success, RebuildingDstFinish->construct() clears this flag.
+	// On success, RebuildingDstFinish→construct() clears this flag.
 	r.reconstructRequired = true
 
 	// Delete extra snapshots if any
@@ -4403,7 +4414,7 @@ func (r *Replica) rebuildingDstShallowCopyPrepare(spdkClient *spdkclient.Client,
 	if r.rebuildingDstCache.rebuildingPort != 0 {
 		if err := spdkClient.StartExposeBdev(helpertypes.GetNQN(r.rebuildingDstCache.rebuildingLvol.Name), r.rebuildingDstCache.rebuildingLvol.UUID,
 			generateNGUID(r.rebuildingDstCache.rebuildingLvol.Name), r.IP, strconv.Itoa(int(r.rebuildingDstCache.rebuildingPort)),
-			helpertypes.InternalHostNQN); err != nil {
+			spdktypes.NvmeTransportTypeTCP, helpertypes.InternalHostNQN); err != nil {
 			return "", false, err
 		}
 		dstRebuildingLvolAddress = net.JoinHostPort(r.IP, strconv.Itoa(int(r.rebuildingDstCache.rebuildingPort)))
@@ -4693,7 +4704,7 @@ func (r *Replica) RebuildingDstSnapshotCreate(spdkClient *spdkclient.Client, sna
 	}
 	// Guarantee the snapshot lvol has the correct parent after rebuilding.
 	// The ancestor snapshot's parent is a clone entrypoint for linked-clone replicas; however the
-	// entrypoint does not exist on DST at this point - it will be set in RebuildingDstFinish.
+	// entrypoint does not exist on DST at this point — it will be set in RebuildingDstFinish.
 	// Treat it the same as an empty parent here so we do not accidentally call BdevLvolDetachParent.
 	dstSnapParentLvolName := ""
 	if srcSnapSvcLvol.Parent == "" || IsCloneEntrypointLvol(srcSnapSvcLvol.Parent) {
